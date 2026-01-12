@@ -5,14 +5,21 @@ This repository provides an introduction to the concepts of parallel programming
 
 .. note::
 
-   This project is under active development.
+   This project is a template for creating documentation for NCI training workshops.
+   
+.. note::
+   It accepts rst, markdown and ipynb files. To configure the markdown format, see the `conf.py` file.
+
+
 
 Contents
 --------
 
 .. toctree::
-
+   accounts
    prerequisite
+   aardvark.ipynb
+   lucie.ipynb
    outcomes
    modules
    packages
