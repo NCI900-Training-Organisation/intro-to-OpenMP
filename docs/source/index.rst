@@ -14,15 +14,25 @@ This repository provides an introduction to the concepts of parallel programming
 
 Contents
 --------
+.. toctree::
+    :maxdepth: 1
+    :caption: Setup and Prerequisites
+
+    prerequisite.rst
+    outcomes.rst  
+    modules.rst
+    packages.rst
 
 .. toctree::
-   accounts
-   prerequisite
-   aardvark.ipynb
-   lucie.ipynb
-   outcomes
-   modules
-   packages
-   are_errors.rst
-   tutorial
-   references
+    :maxdepth: 4
+    :caption: Tutorial
+    :numbered:
+    
+    accounts
+    aardvark.ipynb
+    lucie.ipynb
+    are_errors.rst
+    tutorial
+    references
+
+   
