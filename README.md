@@ -16,7 +16,8 @@ The boilerplate files for the sphinx theme include:
 - `docs/requirements.txt` : Tell Readthedocs site to install the packages needed for the build.  
 - `docs/source/conf.py` : Configrations for Sphinx to build HTML files. Theme options are also in this file.
 - `docs/source/_static` : Storing logos and files needed for the static site.
-- `docs/source/_template` : If needed, any template customisation files to use.
+- `docs/source/_template` : If needed, any template customisation files to use.  
+- `docs/source/index.rst`: Update the homepage per project.
 
 
 ## Use This Template 

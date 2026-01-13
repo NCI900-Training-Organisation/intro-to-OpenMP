@@ -1,5 +1,6 @@
 # Configuration file for the Sphinx documentation builder.
 
+# TODO: UPDATE THIS FILE TO CUSTOMISE THE DOCUMENTATION.
 # -- Project information
 # Title can be changed in the index.rst file
 # project = 'Name of the Tutorial'
@@ -26,8 +27,11 @@ extensions = [
 
 ]
 nb_execution_mode = "off"
+
+# UPDATE THIS IF YOU NEED TO RENDER MARKDOWN FILE TO DIFFERENT FLAVOR.
 # render markdown format as ['commonmark', 'gfm', 'myst']
 nb_render_markdown_format="myst"
+
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
     'sphinx': ('https://www.sphinx-doc.org/en/master/', None),
@@ -40,14 +44,14 @@ templates_path = ['_templates']
 # -- Options for HTML output
 
 html_theme = 'sphinx_book_theme'
-
-# sphinx-book-theme options
 html_static_path = ["_static"]
 html_theme_options = {
     "path_to_docs": "docs/source",
+    # TODO: UPDATE THIS TO THE WORKSHOP REPOSITORY URL OF THE DOCUMENTATION.
     "repository_url": "https://github.com/zora-wuw/test_template",
     "use_repository_button": True,
     "home_page_in_toc": True,
+    "back_to_top_button": True,
     "logo": {
       "image_light": "_static/logo-light.png",
       "image_dark": "_static/logo-dark.png",
