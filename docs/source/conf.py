@@ -44,10 +44,11 @@ html_theme = 'sphinx_book_theme'
 # sphinx-book-theme options
 html_static_path = ["_static"]
 html_theme_options = {
+    "path_to_docs": "docs/source",
     "repository_url": "https://github.com/zora-wuw/test_template",
     "use_repository_button": True,
+    "home_page_in_toc": True,
     "logo": {
-      "text": "Name of the Worskshop (Sidebar)",
       "image_light": "_static/logo-light.png",
       "image_dark": "_static/logo-dark.png",
    },
