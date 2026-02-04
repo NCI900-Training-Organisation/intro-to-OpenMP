@@ -12,8 +12,6 @@ Heading level 2 (Section)
 
 
 
-Heading level 2 (Section)
-==========================
 
 Heading level 3 (Subsection)
 ----------------------------
