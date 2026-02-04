@@ -16,13 +16,22 @@ Open [https://are.nci.org.au](https://are.nci.org.au) in a new tab, and log in w
 You will see a dashboard page as shown after login.
 Each App will be run as an **interactive session/job** connected to Gadi. In this tutorial we will start a  JupyterLab session.
 
-<img src="figs/ARE%20Login%20Page.png" alt="ARE Login Page" style="width:50%; display:block; margin-left:auto; margin-right:auto;" />
-
+```{figure} figs/ARE_Login_Page.png
+:alt: ARE Login Page
+:width: 50%
+:name: are-login-page
+:align: center
+```
 ## New JupyterLab Session
 
 Click on the **JupyterLab** tile from the Dashboard, this will open the setting page for a new Jupyter session. We will fill in circled fields next.  
 
- <img src="figs/ARE_click_jupyter.png" alt="Click JupyterLab tile" style="width:50%; display:block; margin-left:auto; margin-right:auto;" />
+```{figure} figs/ARE_click_jupyter.png
+:alt: Click JupyterLab tile
+:width: 50%
+:name: are-click-jupyter
+:align: center
+```
 
 ## Basic Settings
 Depending on the notebook you are running, you may need to adjust the settings. If you are attending a workshop, you should use the settings specified in the workshop.
@@ -36,14 +45,25 @@ Setting form has free text input boxes. So we can **copy the example values** be
 > | **Project:**            | `vp91`                       |
 > | **Storage:**            | `gdata/vp91+scratch/vp91`    |
 
-<img src="figs/ARE_settings.png" alt="Setting page for JupyterLab session" style="width:70%; display:block; margin-left:auto; margin-right:auto;" />
+```{figure} figs/ARE_settings.png
+:alt: Setting page for JupyterLab session
+:width: 70%
+:name: are-settings
+:align: center
+```
 
 Input boxes can also be used as dropdown selection. If you need to use different NCI projects when working on your project you might find the dropdown function helpful.
  
 ## Advanced Settings
 
 Click on  **Show advanced settings** at the end of page. This will expand the form with extra fields. 
-<img src="figs/ARE_show_adv_settings.png" alt="Show advanced settings checkbox" style="width:70%; display:block; margin-left:auto; margin-right:auto;" />
+
+```{figure} figs/ARE_show_adv_settings.png
+:alt: Show advanced settings checkbox
+:width: 70%
+:name: are-show-adv-settings
+:align: center
+```
 
 Some field names are similar, check the **field names** carefully. 
 
@@ -54,7 +74,12 @@ Some field names are similar, check the **field names** carefully.
 > | **Python or Conda virtual environment base**| `/scratch/data/vp91/Training-Venvs/intro-to-dask`| 
 >   
 
-<img src="figs/ARE_adv_settings.png" alt="Advanced settings section" style="width:70%; display:block; margin-left:auto; margin-right:auto;" />
+```{figure} figs/ARE_adv_settings.png
+:alt: Advanced settings section
+:width: 70%
+:name: are-adv-settings
+:align: center
+```
 
 
 ## Launch Session
@@ -64,17 +89,32 @@ Make sure the setting fields and values are filled correctly, and then click on 
 Now you will see the green <u>*Session was successfully created*</u> message at the top, and **Queued** status is shown on the right side of the JupyterLab session block as shown below. Wait for the session to start.
 The wait time depends on the number of cores as well as time requested.
  
-<img src="figs/ARE_queued.png" alt="Session queued" style="width:70%; display:block; margin-left:auto; margin-right:auto;" />
+```{figure} figs/ARE_queued.png
+:alt: Session queued
+:width: 70%
+:name: are-queued
+:align: center
+```
 
 ## Open JupyterLab
 Once the requested resources are allocated, the session will start and the status will change to **Running**.
 The **Jupyter** path should start with <u>*the virtual environment base value*</u> used in settings, then point to <u>*/bin/jupyter*</u>.
 
- <img src="figs/ARE_running.png" alt="Session running" style="width:70%; display:block; margin-left:auto; margin-right:auto;" />
+```{figure} figs/ARE_running.png
+:alt: Session running
+:width: 70%
+:name: are-running
+:align: center
+```
 
 Confirm the Jupyter path of your session is correct, and click on **Open JupyterLab**. This will open a new browser tab with JupyterLab interface. 
 
-<img src="figs/JupyterLab_UI.png" alt="JupyterLab UI" style="width:70%; display:block; margin-left:auto; margin-right:auto;" />
+```{figure} figs/JupyterLab_UI.png
+:alt: JupyterLab UI
+:width: 70%
+:name: jupyterlab-ui
+:align: center
+```
 
 **Congratulations, you are all set for the workshop!**
 
@@ -120,18 +160,30 @@ Confirm the Jupyter path of your session is correct, and click on **Open Jupyter
 **Solution:** 
 1. Login to Gadi terminal
 2. Execute the following commands:
-```plaintext
-2. **mkdir -p ~/.ssh**
-2. **chmod 700 ~/.ssh**
-```
+
+`mkdir -p ~/.ssh`  
+`chmod 700 ~/.ssh`
+
 ## Check Debug Log for Other Issues
 
 If your issue is not solved above, please follow these instructions to check the session log or report the issue:
 1. Go to **my interactive sessions** by clicking one of the buttons on the page:
-![My Interactive Sessions](figs/ARE_my_interactive_session_buttons.png)
+
+```{figure} figs/ARE_my_interactive_session_buttons.png
+:alt: My Interactive Sessions
+:width: 70%
+:name: are-my-interactive-sessions
+:align: center
+```
 
 2. On the Session block, click **Debug Log** link
-![Debug Log link](figs/ARE_log_link.png)
+
+```{figure} figs/ARE_log_link.png
+:alt: Debug Log link
+:width: 70%
+:name: are-log-link
+:align: center
+```
 ## Report Issue to Helpdesk
 
 1. Copy **Debug Log** link (if job is still running then use the **Session id** link).
@@ -152,7 +204,13 @@ If your issue is not solved above, please follow these instructions to check the
 The JupyterLab workspace consists of a [main work area](https://jupyterlab.readthedocs.io/en/stable/user/interface.html#main-area) containing tabs of documents and activities, a collapsible [left sidebar](https://jupyterlab.readthedocs.io/en/stable/user/interface.html#left-sidebar), and a [menu bar](https://jupyterlab.readthedocs.io/en/stable/user/interface.html#menu-bar).
 
 The left sidebar contains a [file browser](https://jupyterlab.readthedocs.io/en/stable/user/files.html#working-with-files), the [list of running kernels and terminals](https://jupyterlab.readthedocs.io/en/stable/user/running.html#running), the Dask extension of JupyterLab, Table of Contentions and Extension Manager.
-![JupyterLab interface](figs/JupyterLab_UI%20copy.png)
+
+```{figure} figs/JupyterLab_UI.png
+:alt: JupyterLab interface
+:width: 70%
+:name: jupyterlab-interface
+:align: center
+```
 
 
 ## Running Notebook

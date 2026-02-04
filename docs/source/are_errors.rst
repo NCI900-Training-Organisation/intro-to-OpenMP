@@ -4,23 +4,23 @@ Common ARE Errors
 Bad Requests
 -----------------------------------
 
-.. figure:: ../../figs/1.jpg
+.. figure:: figs/1.jpg
 
 This error is often caused by issues with cookies or cache. To resolve it, open another tab and log in again, or try using incognito mode.
 
 Illegal Characters
 -----------------------------------
 
-.. figure:: ../../figs/2.jpg
+.. figure:: figs/2.jpg
 
-.. figure:: ../../figs/3.jpg
+.. figure:: figs/3.png
 
 This issue occurs when special characters are copied into the ARE forms. To fix it, delete the entries and manually type the values into the forms.
 
 Hook Rejected
 -----------------------------------
 
-.. figure:: ../../figs/4.jpg
+.. figure:: figs/4.png
 
 .. code-block::
 
@@ -42,7 +42,7 @@ This error is related to a PBS hook rejection. Relaunch the job to resolve the i
 Error Saving the File
 -----------------------------------
 
-.. figure:: ../../figs/7.jpg
+.. figure:: figs/7.png
 
 This error occurs when a file with the same name already exists and might be owned by another user. Rename the file and try saving it again.
 
@@ -58,6 +58,6 @@ This error occurs if you are not a member of the project you are trying to submi
 Phusion Passenger Error
 -----------------------------------
 
-.. figure:: ../../figs/8.jpg
+.. figure:: figs/8.png
 
 This error indicates that the user's home directory is full. Delete some files to free up space and resolve the issue.
