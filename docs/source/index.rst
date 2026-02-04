@@ -5,10 +5,12 @@ This repository provides an introduction to the concepts of parallel programming
 
 .. note::
 
-   This project is a template for creating documentation for NCI training workshops. Please update the project name and description in the index.rst file; and setting tables in use-jupyterlab.md file. Delete if not used to the workshop.
+   This project is a template for creating documentation for NCI training workshops.  
+   Please update the `index.rst`; setting tables in `use-jupyterlab.md` (delete page if not used) and `conf.py` to match the workshop.
+   Add content files under `docs/source/tutorial`. Content can be `rst`, `md` or `ipynb` files, thanks to the `myst-nb` extension. 
    
 .. note::
-   It accepts rst, markdown and ipynb files. To configure the markdown format, see the `conf.py` file.
+   To configure the markdown format, see the `conf.py` file.
 
 
 
