@@ -45,6 +45,7 @@ templates_path = ['_templates']
 
 html_theme = 'sphinx_book_theme'
 html_static_path = ["_static"]
+html_css_files = ["custom.css"]
 html_theme_options = {
     "path_to_docs": "docs/source",
     # TODO: UPDATE THIS TO THE WORKSHOP REPOSITORY URL OF THE DOCUMENTATION.
