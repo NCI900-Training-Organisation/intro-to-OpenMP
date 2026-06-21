@@ -17,7 +17,7 @@ The area of the square is 1 and the ratio of the area of the circle to the area 
 
    area(circle) / area(square) = (\pi/4) / 1 = \pi/4
 
-If we generate a large number of uniform points that falls within the square, some of the points will fall within circle and some outside it. The ratio of points inside the circle to the toatal number of points will be approximately equal to the ratio of areas of the circle and the square, ie,
+If we generate a large number of uniform points that falls within the square, some of the points will fall within circle and some outside it. The ratio of points inside the circle to the total number of points will be approximately equal to the ratio of areas of the circle and the square, ie,
 
 .. math::
 
@@ -31,4 +31,4 @@ If we generate a large number of uniform points that falls within the square, so
 
    \pi = 4 \times (N_{inner} / N_{total})
 
-These calculations are *embarassingle parellel* and they can benefit from multi-threaded programming.
+These calculations are *embarrassingly parallel* and they can benefit from multi-threaded programming.

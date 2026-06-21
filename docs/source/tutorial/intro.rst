@@ -38,7 +38,7 @@ Threads
 
 A thread is a sequential independent execution stream that executes different tasks in order. Typically, a thread is a constituent component of a process, and a single process can have multiple threads. Each thread maintains its own program counter, stack memory, and registers. Nevertheless, threads within the same process share the heap memory and it can potentially share the same code and data.
 
-Each process has an upper bound on the number of threads it can handle. This number can be found using the command:
+The kernel sets a system-wide upper bound on the total number of threads. This limit can be found using the command (per-process limits are configured separately, e.g. via ``ulimit -u``):
 
 ::
 
@@ -53,12 +53,12 @@ Fork-Join Parallelism
    :alt: Fork-join parallelism
    :align: center
 
-The fork-join method is a parallel computing technique in which the program's execution branches or ``forks`` at specific points and later converges or ``joins`` at subsequent points. In the fork phase, individual threads execute parallel segments of the program that can be processed simultaneously. In the join phase, the program resumes its execution in a sequential manner, much like a traditional sequential program. OpenMP follows the fork-join model of paralleism.
+The fork-join method is a parallel computing technique in which the program's execution branches or ``forks`` at specific points and later converges or ``joins`` at subsequent points. In the fork phase, individual threads execute parallel segments of the program that can be processed simultaneously. In the join phase, the program resumes its execution in a sequential manner, much like a traditional sequential program. OpenMP follows the fork-join model of parallelism.
 
 Sample Application
 ------------------------------------------------------------
 
-In this tutorial we will be mainly using 3 applications to demonstrate the different aspcts of OpenMP:
+In this tutorial we will be mainly using 3 applications to demonstrate the different aspects of OpenMP:
 
 * Calculating the :doc:`value of π <applications/pi>` using monte carlo method.
 * Finding :doc:`Mandelbrot <applications/mandelbrot>` fractal by Monte Carlo sampling.
@@ -88,4 +88,4 @@ The number of threads that are spawned may be:
 * set using one of the OpenMP function calls; or
 * predefined by an environment variable or a system setup default.
 
-We note that the number of threads may exceed the number of physical cores (CPUs) on the machine; this is known as *over-subscription*. When over-subscription occurs, it is up to the operating system to schedule the threads as best it can among available cores. Even if the user requests a high thread count, the OpenMP runtime will generally avoid over-subscription, as it can reduce performance. This behaviour is controlled by the ``OMP_DYNAMIC`` environment variable (default ``true``), allowing the runtime to "adjust the number of threads to use for executing parallel regions to optimize the use of system resources". Setting ``OMP_DYNAMIC=false`` disables this behaviour, requiring OpenMP to spawn the requested number of threads.
+We note that the number of threads may exceed the number of physical cores (CPUs) on the machine; this is known as *over-subscription*. When over-subscription occurs, it is up to the operating system to schedule the threads as best it can among available cores. Even if the user requests a high thread count, the OpenMP runtime will generally avoid over-subscription, as it can reduce performance. This behaviour is controlled by the ``OMP_DYNAMIC`` environment variable, allowing the runtime to "adjust the number of threads to use for executing parallel regions to optimize the use of system resources". Its initial value is implementation defined; common implementations (such as GCC's libgomp) default it to ``false``. Setting ``OMP_DYNAMIC=true`` enables this dynamic adjustment, while ``OMP_DYNAMIC=false`` requires OpenMP to attempt to spawn the requested number of threads.

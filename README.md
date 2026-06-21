@@ -34,7 +34,7 @@ You can use the command `lstopo` to find the architecture of your machine. `lsto
 
 A thread is a sequential independent execution stream that executes different tasks in order. Typically, a thread is a constituent component of a process, and a single process can have multiple threads. Each thread maintains its own program counter, stack memory, and registers. Nevertheless, threads within the same process share the heap memory and it can potentially share the same code and data.
 
-Each process has an upper bound on the number of threads it can handle. This number can be found using the command:
+The kernel sets a system-wide upper bound on the total number of threads. This limit can be found using the command (per-process limits are configured separately, e.g. via `ulimit -u`):
 ```
 cat /proc/sys/kernel/threads-max
 ```
@@ -47,14 +47,14 @@ The operating system assigns a thread to a core, allowing the thread to utilize 
   <img src="figs/fork-join.png" alt="Image Description">
 </p>
 
-The fork-join method is a parallel computing technique in which the program's execution branches or `forks` at specific points and later converges or `joins` at subsequent points. In the fork phase, individual threads execute parallel segments of the program that can be processed simultaneously. In the join phase, the program resumes its execution in a sequential manner, much like a traditional sequential program. OpenMP follows the fork-join model of paralleism. 
+The fork-join method is a parallel computing technique in which the program's execution branches or `forks` at specific points and later converges or `joins` at subsequent points. In the fork phase, individual threads execute parallel segments of the program that can be processed simultaneously. In the join phase, the program resumes its execution in a sequential manner, much like a traditional sequential program. OpenMP follows the fork-join model of parallelism. 
 
 ## Sample Application
 
-In this tutorial we will be mainly using 3 applications to demonstrate the different aspcts of OpenMP:
-* Calculating the [value of `π`](./applications/pi.md) using monte carlo method.
-* Finding [Mandelbrot](./applications/mandelbrot.md) fractal by Monte Carlo sampling.
-* Tiled [Cholesky Factorization](./applications/cholesky.md).
+In this tutorial we will be mainly using 3 applications to demonstrate the different aspects of OpenMP:
+* Calculating the [value of `π`](./docs/source/tutorial/applications/pi.rst) using monte carlo method.
+* Finding [Mandelbrot](./docs/source/tutorial/applications/mandelbrot.rst) fractal by Monte Carlo sampling.
+* Tiled [Cholesky Factorization](./docs/source/tutorial/applications/cholesky.rst).
 
 ## The Performance Application Programming Interface (PAPI)
 
@@ -79,7 +79,7 @@ The number of threads that are spawned may be:
 *   set using one of the OpenMP function calls; or
 *   predefined by an environment variable or a system setup default.
 
-We note that the number of threads may exceed the number of physical cores (CPUs) on the machine; this is known as *over-subscription*. When over-subscription occurs, it is up to the operating system to schedule the threads as best it can among available cores. Even if the user requests a high thread count, the OpenMP runtime will generally avoid over-subscription, as it can reduce performance. This behaviour is controlled by the `OMP_DYNAMIC` environment variable (default `true`), allowing the runtime to "adjust the number of threads to use for executing parallel regions to optimize the use of system resources". Setting `OMP_DYNAMIC=false` disables this behaviour, requiring OpenMP to spawn the requested number of threads.
+We note that the number of threads may exceed the number of physical cores (CPUs) on the machine; this is known as *over-subscription*. When over-subscription occurs, it is up to the operating system to schedule the threads as best it can among available cores. Even if the user requests a high thread count, the OpenMP runtime will generally avoid over-subscription, as it can reduce performance. This behaviour is controlled by the `OMP_DYNAMIC` environment variable, allowing the runtime to "adjust the number of threads to use for executing parallel regions to optimize the use of system resources". Its initial value is implementation defined; common implementations (such as GCC's libgomp) default it to `false`. Setting `OMP_DYNAMIC=true` enables this dynamic adjustment, while `OMP_DYNAMIC=false` requires OpenMP to attempt to spawn the requested number of threads.
 
 ## OpenMP Directives
 
@@ -103,10 +103,10 @@ As an example, consider the following code:
 int main(void) 
 {
 
-  printf("Total number of threads allocated in the parellel section %d \n", omp_get_num_threads() );
-  #pragma omp parallel 
+  printf("Total number of threads allocated in the serial section %d \n", omp_get_num_threads() );
+  #pragma omp parallel
   {
-    printf("This is run by thread %d \n", omp_get_thread_num());
+    printf("This is run by thread %d, Total threads in the parallel section %d\n", omp_get_thread_num(), omp_get_num_threads());
   }
   
   return 0;
@@ -116,7 +116,7 @@ int main(void)
 
 The above code is contained in file [`openmp_parallel_region.c`](./src/openmp_parallel_region.c). Compile it by typing:
 ```
-make openmp_parallel_section
+make openmp_parallel_region
 ```
 
 > **_NOTE:_**   Each program can be compiled by: *make \<program name\>*
@@ -187,7 +187,7 @@ The optional `clause`s can be used to define data sharing as follows:
 *   `firstprivate(list)` specifies that each thread has its own local copy of each variable listed, which is initialized to the value that the variable has on entry to the block.
 *   `default(data-sharing-attribute)` - where for C/C++ the `data-sharing-attribute` is either `shared` or none. When you specify the default `data-sharing-attribute`, you declare the default for all variables in the code block to be shared or to have no default (none). _Note - Fortran also permits a default of `private`. This is not available in C/C++ since many of the standard libraries use global variables, and scoping these as local would give errors._
 
-6. Run the program [`openmp_datasharing.c`](./src/./openmp_datasharing.c) with four threads and identtify the difference between the different clauses.
+6. Run the program [`openmp_datasharing.c`](./src/./openmp_datasharing.c) with four threads and identify the difference between the different clauses.
     
         make openmp_datasharing
         OMP_NUM_THREADS=4 ./openmp_datasharing
@@ -217,7 +217,7 @@ A _race condition_ arises when two threads simultaneously access a shared variab
 
 A _critical section_ refers to a segment of code responsible for accessing shared resources, such as variables or data structures. This section necessitates exclusive execution by a single process at any given moment to prevent the occurrence of race conditions and other synchronization-related problems.
 
-In the solution of the previous excercise you can see this race condition. Every time you run the program you may get a different value for sum. This problem can be addressed in OpenMP using `critical` or `atomic` construct.
+In the solution of the previous exercise you can see this race condition. Every time you run the program you may get a different value for sum. This problem can be addressed in OpenMP using `critical` or `atomic` construct.
 
 ### The `critical` Construct
 
@@ -241,7 +241,7 @@ The [atomic construct](https://www.openmp.org/spec-html/5.1/openmpsu105.html#x13
 The directive refers to the line of code immediately following it. Be aware that there may be an overhead associated with the setting and unsetting of locks - so use this directive and/or critical sections only when necessary. For example, we could use the atomic construct to parallelize an inner product:
 
 ```c
-#pragma omp parallel for shared(a,b,sum) private(I,tmp)
+#pragma omp parallel for shared(a,b,sum) private(i,tmp)
 for (i = 0; i < n; i++) {
   tmp = a[i] * b[i];
   #pragma omp atomic
@@ -253,7 +253,7 @@ but the performance would be very poor!
 
 ### Exercise 2
 
-8. The program [`exercise1.c`](./src/exercise1_solution.c) has a race condition. Solve this race condition using the the construct `atomic` or `critical`. The solutions are availble in [`exercise2_solution.c`](./src/exercise2_solution.c).
+8. The program [`exercise1.c`](./src/exercise1_solution.c) has a race condition. Solve this race condition using the construct `atomic` or `critical`. The solutions are available in [`exercise2_solution.c`](./src/exercise2_solution.c).
 
 
 ### False Sharing
@@ -262,11 +262,11 @@ but the performance would be very poor!
   <img src="figs/false_sharing.png" alt="Image Description">
 </p>
 
-All modern processors use cache. Accessing a memory location not only copy that memory location, but a slice of memory to me moved to the cache. This slice of memory is called __cache line__. For example when you aceess an array element `A[N]` there is a good chance `A[N+1]` and `A[N+2]` is also moved to the cache. 
+All modern processors use cache. Accessing a memory location not only copy that memory location, but a slice of memory to be moved to the cache. This slice of memory is called __cache line__. For example when you aceess an array element `A[N]` there is a good chance `A[N+1]` and `A[N+2]` is also moved to the cache. 
 
-Concurrent updated to separate elements within a shared cache line by different processors cause the entire cache line to be invalidated, despite the logically independent nature of these updates. Each update to an element within the cache line flags the entire line as invalid, affecting other threads attempting to access different elements within the same line. Consequently, they are compelled to retrieve a fresher version of the line from memory or an alternate source, even if the specific element they're accessing hasn't been altered. This occurs because cache coherence operates at the level of cache lines, not individual elements. Consequently, it leads to amplified interconnect activity and additional processing overhead. Furthermore, during the update of the cache line, access to the elements within it is restricted.
+Concurrent updates to separate elements within a shared cache line by different processors cause the entire cache line to be invalidated, despite the logically independent nature of these updates. Each update to an element within the cache line flags the entire line as invalid, affecting other threads attempting to access different elements within the same line. Consequently, they are compelled to retrieve a fresher version of the line from memory or an alternate source, even if the specific element they're accessing hasn't been altered. This occurs because cache coherence operates at the level of cache lines, not individual elements. Consequently, it leads to amplified interconnect activity and additional processing overhead. Furthermore, during the update of the cache line, access to the elements within it is restricted.
 
-For instance if Thread T1 changes the data `A[N]` it will make the entire cache line invalid. Which means the data `A[N+1]` and `A[N+2]` also becomes invalid. So, if Threard T2 tries to access `A[N+1]` it will see that the the cache line is invalid and will fetch the data from the memory. This is __false sharing__. 
+For instance if Thread T1 changes the data `A[N]` it will make the entire cache line invalid. Which means the data `A[N+1]` and `A[N+2]` also becomes invalid. So, if Thread T2 tries to access `A[N+1]` it will see that the cache line is invalid and will fetch the data from the memory. This is __false sharing__. 
 
 <p align="center">
   <img src="figs/cache1.png" alt="Image Description">
@@ -293,11 +293,11 @@ In the program [`exercise2_solution.c`](./src/exercise2_solution.c), we parallel
 for (...) { ... }
 ```
 
-[openmp_parallel_for.c](./src/openmp_parallel_for.c) demonstrates how the work the `for` construct works. Note that `for` construct only handles the distribution of work to different threads. We still have to manage the critical sections and make sure there are no race conditions.
+[openmp_parallel_for.c](./src/openmp_parallel_for.c) demonstrates how the `for` construct works. Note that `for` construct only handles the distribution of work to different threads. We still have to manage the critical sections and make sure there are no race conditions.
 
 ### Exercise 3
 
-10. [exercise3.c](./src/exercise3.c) calculates the value [`π` Using Monte Carlo Method](./applications/pi.md). Parallelize the program using the `for` construct. The solution is available in [exercise3_solution.c](./src/exercise3_solution.c).
+10. [exercise3.c](./src/exercise3.c) calculates the value [`π` Using Monte Carlo Method](./docs/source/tutorial/applications/pi.rst). Parallelize the program using the `for` construct. The solution is available in [exercise3_solution.c](./src/exercise3_solution.c).
 
 ### The `schedule` Construct
 
@@ -313,7 +313,7 @@ An important optional clause is the `schedule(type[,chunk])` clause. This can be
 
 ### Exercise 4
 
-12. The program [exercise4.c](./src/exercise4.c) generates the [mandelbrot](./applications/mandelbrot.md) set. Paralleize the program using different OpenMP directives. Test how `static` and `dynamic` influences the performance of the program. The solution is available in [exercise4_solution.c](./src/exercise4_solution.c).
+12. The program [exercise4.c](./src/exercise4.c) generates the [mandelbrot](./docs/source/tutorial/applications/mandelbrot.rst) set. Parallelize the program using different OpenMP directives. Test how `static` and `dynamic` influences the performance of the program. The solution is available in [exercise4_solution.c](./src/exercise4_solution.c).
 
 ### The `barrier` Construct
 
@@ -356,9 +356,9 @@ or using the [`master` construct](https://www.openmp.org/spec-html/5.0/openmpse2
 }
 ```
 
-In the `single` construct the thread that encounters the code block first, executes it. While in the `master` construct the master thread always executes the code.
+In the `single` construct the thread that encounters the code block first, executes it. While in the `master` construct the master thread always executes the code. (Since OpenMP 5.1 the `master` construct is deprecated in favour of the equivalent `masked` construct.)
 
-By default, all other threads will wait at the end of the structured block until the thread executing that block has completed. You can avoid this by augmenting the single directive with a `nowait` clause.
+The `single` construct has an implicit barrier at the end of the structured block: all other threads wait there until the executing thread has completed. You can avoid this by augmenting the `single` directive with a `nowait` clause. The `master` construct, by contrast, has no implicit barrier.
 
 15. [openmp_single](./src/openmp_single.c) demonstrates how the `single` construct works
 16. [openmp_master](./src/openmp_master.c) demonstrates how the `master` construct works. 
@@ -367,7 +367,7 @@ By default, all other threads will wait at the end of the structured block until
 
 ![](figs/sections.png)
 
-A program can be divided into different sections. Each of these section can be completed by a separate thread. This is especially usefull when the sections are independent of one another.
+A program can be divided into different sections. Each of these section can be completed by a separate thread. This is especially useful when the sections are independent of one another.
 
 ```c
 #pragma omp parallel
@@ -402,14 +402,14 @@ else {
 }
 ```
 
-All parallel programs are bound by the [Amdhal's Law](https://en.wikipedia.org/wiki/Amdahl%27s_law) - "_The overall performance improvement gained by optimizing a single part of a system is limited by the fraction of time that the improved part is actually used_".
+All parallel programs are bound by the [Amdahl's Law](https://en.wikipedia.org/wiki/Amdahl%27s_law) - "_The overall performance improvement gained by optimizing a single part of a system is limited by the fraction of time that the improved part is actually used_".
 
 <p align="center">
   <img src="figs/amdahls.png" alt="Image Description">
 </p>
 
 That is, the performance gain from parallelization is limited by the part of the program that can be parallelised. In the above diagram _Program 1_ will benefit more from parallelization when compared to  _Program 2_. 
-In addition lanching threads have a non-trivial cost. So running things in parallel may not be helpful if the work to paralleised is trivial. We can use the you `if` clause to run things in parallel only if we have non-trivial work to parellelise. 
+In addition launching threads have a non-trivial cost. So running things in parallel may not be helpful if the work to parallelised is trivial. We can use the `if` clause to run things in parallel only if we have non-trivial work to parallelise. 
 
 18. The program [openmp_if.c](./src/openmp_if.c) demonstrates how you can use the `if` clause. Run the program with different combination of _threads_ and _elements_. What difference do you see? 
 18. Change the _THRESHOLD_ value in the program. What difference do you see? 
@@ -435,13 +435,14 @@ for (int k = 0; k < LIMIT; k++) {
 
 ### The `tasks` Construct
 
-Tasks in OpenMP is composed of a code segment and the data to be operated on, along with the location where the execution will happen. When a thread encounters a task construct, it can choose to execute the task immediately or defer its execution until a later time. If deferred, the task in placed in a task pool. The threads in the parellel section can remove the tasks from the task pool and execute them until the pool is empty.
+Tasks in OpenMP is composed of a code segment and the data to be operated on, along with the location where the execution will happen. When a thread encounters a task construct, it can choose to execute the task immediately or defer its execution until a later time. If deferred, the task in placed in a task pool. The threads in the parallel section can remove the tasks from the task pool and execute them until the pool is empty.
 
 ![](figs/taskpool.png)
 
 ```c
 int fib(int n)
 {
+    int l, r;
     if (n < 2) return n;
 
     #pragma omp task shared(l) firstprivate(n)
@@ -454,7 +455,7 @@ int fib(int n)
     return l+r;
 }
 ```
-The code block immediatly after `task` construct will be the code a task will execute. The `#pragma omp taskwait` construct specifies a wait on the completion of child tasks of the current task.
+The code block immediately after `task` construct will be the code a task will execute. The `#pragma omp taskwait` construct specifies a wait on the completion of child tasks of the current task.
 
 21. The program [openmp_tasks.c](./src/openmp_tasks.c) demonstrates how you can use the `task` construct.
 
@@ -468,7 +469,7 @@ Some examples of use for the depend clause:
 2. `depend(out: x)`: the task will write variable x.
 3. `depend(inout: x, buffer[0:n])`: the task will both read and write variable x and the content of n elements of buffer starting from index 0.
 
-The `depends` clause allows the programmer to create a _happens-before_ relation between tasks. For instance the code segment given below will make sure that the tasks that caclculate the value of `z` is executed only after the tasks that write to `x` and `y` is complete.
+The `depends` clause allows the programmer to create a _happens-before_ relation between tasks. For instance the code segment given below will make sure that the tasks that calculate the value of `z` is executed only after the tasks that write to `x` and `y` is complete.
 
 ```c
 #pragma omp task shared(x) depend(out: x)
@@ -483,7 +484,7 @@ z = read_val(&x) + read_val(&y);
 ```
 ![](figs/task_graphs.drawio.png)
 
-One of the main advanatge of `depends` clause is that it removes the need of the `taskwait` clause. 
+One of the main advantage of `depends` clause is that it removes the need of the `taskwait` clause. 
 
 22. The program [openmp_depend.c](./src/openmp_depend.c) demonstrates how you can use the `depends` construct.
 
@@ -540,7 +541,7 @@ The `taskwait` construct dictates that the current task region remains suspended
 
 ### Exercise 5
 
-27. The program [exercise5.c](./src/exercise5.c) implements the [Cholesky Factorization](./applications/cholesky.md) without any parallelization. Paralleize the program using different OpenMP task directives. The solution is available in [exercise5_solution.c](./src/exercise5_solution.c).
+27. The program [exercise5.c](./src/exercise5.c) implements the [Cholesky Factorization](./docs/source/tutorial/applications/cholesky.rst) without any parallelization. Parallelize the program using different OpenMP task directives. The solution is available in [exercise5_solution.c](./src/exercise5_solution.c).
 
 You can run the executable using
 

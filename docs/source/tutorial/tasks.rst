@@ -4,7 +4,7 @@ Task-based Computing in OpenMP
 The ``tasks`` Construct
 ------------------------------------------------------------
 
-Tasks in OpenMP is composed of a code segment and the data to be operated on, along with the location where the execution will happen. When a thread encounters a task construct, it can choose to execute the task immediately or defer its execution until a later time. If deferred, the task in placed in a task pool. The threads in the parellel section can remove the tasks from the task pool and execute them until the pool is empty.
+Tasks in OpenMP is composed of a code segment and the data to be operated on, along with the location where the execution will happen. When a thread encounters a task construct, it can choose to execute the task immediately or defer its execution until a later time. If deferred, the task in placed in a task pool. The threads in the parallel section can remove the tasks from the task pool and execute them until the pool is empty.
 
 .. image:: ../figs/taskpool.png
    :alt: Task pool
@@ -14,6 +14,7 @@ Tasks in OpenMP is composed of a code segment and the data to be operated on, al
 
    int fib(int n)
    {
+       int l, r;
        if (n < 2) return n;
 
        #pragma omp task shared(l) firstprivate(n)
@@ -26,7 +27,7 @@ Tasks in OpenMP is composed of a code segment and the data to be operated on, al
        return l+r;
    }
 
-The code block immediatly after ``task`` construct will be the code a task will execute. The ``#pragma omp taskwait`` construct specifies a wait on the completion of child tasks of the current task.
+The code block immediately after ``task`` construct will be the code a task will execute. The ``#pragma omp taskwait`` construct specifies a wait on the completion of child tasks of the current task.
 
 22. The program ``openmp_tasks.c`` demonstrates how you can use the ``task`` construct.
 
@@ -45,7 +46,7 @@ Some examples of use for the depend clause:
 2. ``depend(out: x)``: the task will write variable x.
 3. ``depend(inout: x, buffer[0:n])``: the task will both read and write variable x and the content of n elements of buffer starting from index 0.
 
-The ``depends`` clause allows the programmer to create a *happens-before* relation between tasks. For instance the code segment given below will make sure that the tasks that caclculate the value of ``z`` is executed only after the tasks that write to ``x`` and ``y`` is complete.
+The ``depends`` clause allows the programmer to create a *happens-before* relation between tasks. For instance the code segment given below will make sure that the tasks that calculate the value of ``z`` is executed only after the tasks that write to ``x`` and ``y`` is complete.
 
 .. code-block:: c
 
@@ -62,7 +63,7 @@ The ``depends`` clause allows the programmer to create a *happens-before* relati
    :alt: Task dependency graph
    :align: center
 
-One of the main advanatge of ``depends`` clause is that it removes the need of the ``taskwait`` clause.
+One of the main advantage of ``depends`` clause is that it removes the need of the ``taskwait`` clause.
 
 23. The program ``openmp_depend.c`` demonstrates how you can use the ``depends`` construct.
 
@@ -126,7 +127,7 @@ The ``taskwait`` construct dictates that the current task region remains suspend
 Exercise 5
 ------------------------------------------------------------
 
-28. The program ``exercise5.c`` implements the :doc:`Cholesky Factorization <applications/cholesky>` without any parallelization. Paralleize the program using different OpenMP task directives. The solution is available in ``exercise5_solution.c``.
+28. The program ``exercise5.c`` implements the :doc:`Cholesky Factorization <applications/cholesky>` without any parallelization. Parallelize the program using different OpenMP task directives. The solution is available in ``exercise5_solution.c``.
 
     You can run the executable using
 
