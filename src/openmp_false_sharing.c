@@ -6,7 +6,6 @@
 
 #define N 1000
 #define NUM_THREADS 48
-#define NUM_EVENTS 2
 
 int main(void) 
 {
@@ -14,12 +13,9 @@ int main(void)
 	int x[N];
 	int y[N];
 
-	long long values[NUM_EVENTS] = {0, 0};
-  	int events[NUM_EVENTS] = {PAPI_CA_ITV, PAPI_TOT_CYC};
-
 	int retval;
-	if ((retval = PAPI_start_counters(events, NUM_EVENTS)) != PAPI_OK) {
-    		fprintf(stderr, "PAPI Start counter error! %d, %d\n", retval, __LINE__);
+	if ((retval = PAPI_hl_region_begin("false_sharing")) != PAPI_OK) {
+    		fprintf(stderr, "PAPI_hl_region_begin error! %d, %d\n", retval, __LINE__);
     		exit(1);
   	}
 
@@ -39,12 +35,10 @@ int main(void)
 	
 	}	
 
-	if ((retval = PAPI_stop_counters(values, NUM_EVENTS)) != PAPI_OK) {
-    	fprintf(stderr, "PAPI stop counters error! %d, %d\n", retval, __LINE__);
+	if ((retval = PAPI_hl_region_end("false_sharing")) != PAPI_OK) {
+    	fprintf(stderr, "PAPI_hl_region_end error! %d, %d\n", retval, __LINE__);
     	exit(1);
   	}
-
-	printf("Requests for cache line intervention = %d\n", values[0]);	
 
 	return 0;
 }

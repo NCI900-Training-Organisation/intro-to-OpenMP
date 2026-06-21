@@ -219,7 +219,12 @@ Some methods to avoid false sharing are:
    :alt: Cache line partitioning
    :align: center
 
-9. The programs ``openmp_false_sharing.c`` and ``openmp_false_sharing_avoid.c`` demonstrates false sharing and a method to avoid it.
+9. The programs ``openmp_false_sharing.c`` and ``openmp_false_sharing_avoid.c`` demonstrates false sharing and a method to avoid it. Both programs use the PAPI high-level API, so set the events and enable the report before running to observe the difference in cache-line intervention counts::
+
+      export PAPI_EVENTS="PAPI_CA_ITV,PAPI_TOT_CYC"
+      export PAPI_REPORT=1
+      ./openmp_false_sharing
+      ./openmp_false_sharing_avoid
 
 The Worksharing-Loop Construct (``for``)
 ------------------------------------------------------------

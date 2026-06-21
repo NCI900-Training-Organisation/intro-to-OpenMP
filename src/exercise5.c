@@ -11,7 +11,6 @@
 
 #define DEBUG 0
 
-#define NUM_EVENTS 2
 
 #define BLOCK_SIZE 16
 
@@ -86,14 +85,12 @@ int main(int argc, char *argv[]) {
   double time, err = 0;
 
   float real_time, proc_time, mflops;
-  long long values[NUM_EVENTS];
-  int events[NUM_EVENTS] = {PAPI_DP_OPS, PAPI_TOT_CYC};
 
   int retval;
   elp_time(&isec0, &iusec0);
 
-  if ((retval = PAPI_start_counters(events, NUM_EVENTS)) != PAPI_OK) {
-    fprintf(stderr, "PAPI Start counter error! %d, %d\n", retval, __LINE__);
+  if ((retval = PAPI_hl_region_begin("cholesky")) != PAPI_OK) {
+    fprintf(stderr, "PAPI_hl_region_begin error! %d, %d\n", retval, __LINE__);
     exit(1);
   }
 
@@ -101,8 +98,8 @@ int main(int argc, char *argv[]) {
 
   elp_time(&isec1, &iusec1);
 
-  if ((retval = PAPI_stop_counters(values, NUM_EVENTS)) != PAPI_OK) {
-    fprintf(stderr, "PAPI stop counters error! %d, %d\n", retval, __LINE__);
+  if ((retval = PAPI_hl_region_end("cholesky")) != PAPI_OK) {
+    fprintf(stderr, "PAPI_hl_region_end error! %d, %d\n", retval, __LINE__);
     exit(1);
   }
 

@@ -60,7 +60,17 @@ In this tutorial we will be mainly using 3 applications to demonstrate the diffe
 
 The Performance Application Programming Interface (PAPI) provides an interface and methodology for collecting performance counter information from various hardware and software components. In this tutorial, we will be using PAPI in some of the programs. 
 
-In this tutorial, we will be using PAPI v5.7.0 in some of our programs and the program [`papi.c`](./src/papi.c) demonstrates how we can use the PAPI API.
+In this tutorial, we will be using PAPI 7.0.1 in some of our programs and the program [`papi.c`](./src/papi.c) demonstrates how we can use the PAPI API.
+
+These programs use the PAPI _high-level_ API (`PAPI_hl_region_begin` / `PAPI_hl_region_end`). With this interface the counters to record are chosen at run time through the `PAPI_EVENTS` environment variable, and a report is printed to the screen when `PAPI_REPORT=1` is set. For example:
+
+```
+export PAPI_EVENTS="PAPI_TOT_CYC,PAPI_L1_TCM,PAPI_LD_INS,PAPI_SR_INS"
+export PAPI_REPORT=1
+./papi
+```
+
+You can list the counters available on the machine with `papi_avail` (preset events) and `papi_native_avail` (native events).
 
 
 ## OpenMP API
@@ -292,7 +302,14 @@ Some methods to avoid false sharing are:
   <img src="figs/cache2.png" alt="Image Description">
 </p>
 
-9. The programs [`openmp_false_sharing`](./src/openmp_false_sharing.c) and [`openmp_false_sharing_avoid`](./src/openmp_false_sharing_avoid.c) demonstrates false sharing and a method to avoid it.
+9. The programs [`openmp_false_sharing`](./src/openmp_false_sharing.c) and [`openmp_false_sharing_avoid`](./src/openmp_false_sharing_avoid.c) demonstrates false sharing and a method to avoid it. Both programs use the PAPI high-level API, so set the events and enable the report before running to observe the difference in cache-line intervention counts:
+
+```
+export PAPI_EVENTS="PAPI_CA_ITV,PAPI_TOT_CYC"
+export PAPI_REPORT=1
+./openmp_false_sharing
+./openmp_false_sharing_avoid
+```
 
 ### The Worksharing-Loop Construct (`for`)
 

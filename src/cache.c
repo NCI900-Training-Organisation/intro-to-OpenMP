@@ -4,7 +4,6 @@
 
 #include "papi.h"
 
-#define NUM_EVENTS 4
 #define CACHE 819600
 
 int main(int argc, char* argv[]) 
@@ -15,9 +14,6 @@ int main(int argc, char* argv[])
         return -1;
     } 
 
-	long long values[NUM_EVENTS] = {0, 0, 0, 0};
-  	int events[NUM_EVENTS] = {PAPI_L1_DCM, PAPI_L2_DCM, PAPI_CA_ITV, PAPI_TOT_CYC};
-
 	int dataSize = atoi(argv[1]);
 
 	int cacheLineSize = 64;
@@ -27,8 +23,8 @@ int main(int argc, char* argv[])
 	int arr[dataSize];
 
 	int retval;
-	if ((retval = PAPI_start_counters(events, NUM_EVENTS)) != PAPI_OK) {
-    		fprintf(stderr, "PAPI Start counter error! %d, %d\n", retval, __LINE__);
+	if ((retval = PAPI_hl_region_begin("cache_access")) != PAPI_OK) {
+    		fprintf(stderr, "PAPI_hl_region_begin error! %d, %d\n", retval, __LINE__);
     		exit(1);
   	}
 
@@ -37,13 +33,10 @@ int main(int argc, char* argv[])
 	       arr[i] = arr[i] + 10;
 	}
 
-	if ((retval = PAPI_stop_counters(values, NUM_EVENTS)) != PAPI_OK) {
-    	fprintf(stderr, "PAPI stop counters error! %d, %d\n", retval, __LINE__);
+	if ((retval = PAPI_hl_region_end("cache_access")) != PAPI_OK) {
+    	fprintf(stderr, "PAPI_hl_region_end error! %d, %d\n", retval, __LINE__);
     	exit(1);
   	}
-
-	printf("L1 data cache miss = %d\n", values[0]);	
-	printf("L2 data cache miss = %d\n", values[1]);
 
 	return 0;
 }

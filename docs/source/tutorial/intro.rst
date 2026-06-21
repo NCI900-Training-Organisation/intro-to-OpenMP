@@ -69,7 +69,15 @@ The Performance Application Programming Interface (PAPI)
 
 The Performance Application Programming Interface (PAPI) provides an interface and methodology for collecting performance counter information from various hardware and software components. In this tutorial, we will be using PAPI in some of the programs.
 
-In this tutorial, we will be using PAPI v5.7.0 in some of our programs and the program ``papi.c`` (in the ``src/`` directory) demonstrates how we can use the PAPI API.
+In this tutorial, we will be using PAPI 7.0.1 in some of our programs and the program ``papi.c`` (in the ``src/`` directory) demonstrates how we can use the PAPI API.
+
+These programs use the PAPI *high-level* API (``PAPI_hl_region_begin`` / ``PAPI_hl_region_end``). With this interface the counters to record are chosen at run time through the ``PAPI_EVENTS`` environment variable, and a report is printed to the screen when ``PAPI_REPORT=1`` is set. For example::
+
+   export PAPI_EVENTS="PAPI_TOT_CYC,PAPI_L1_TCM,PAPI_LD_INS,PAPI_SR_INS"
+   export PAPI_REPORT=1
+   ./papi
+
+You can list the counters available on the machine with ``papi_avail`` (preset events) and ``papi_native_avail`` (native events).
 
 OpenMP API
 ------------------------------------------------------------
