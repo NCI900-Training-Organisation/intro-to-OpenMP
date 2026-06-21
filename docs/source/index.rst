@@ -9,12 +9,9 @@ Contents
     :maxdepth: 1
     :caption: Setup and Prerequisites
 
-    prerequisite.rst
-    outcomes.rst
+    
+   
     modules.rst
-    packages.rst
-    use-jupyterlab.md
-    are_errors.rst
 
 .. toctree::
     :maxdepth: 4
