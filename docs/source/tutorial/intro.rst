@@ -1,106 +1,91 @@
-Heading level 2 (Section)
-==========================
+Parallel Programming with OpenMP
+============================================================
 
-.. admonition:: Overview
-   :class: Overview
+This tutorial demonstrates how we can use OpenMP for shared memory programming.
 
-    * **Tutorial:** 10 min
+Learning outcomes of the tutorial are:
 
-        **Objectives:**
-            #. Learn the how Numba works.
+1. Learn how to program for shared memory using OpenMP.
+2. Learn how to use tasks in OpenMP.
 
+Prerequisite:
 
+1. Experience with C Programming.
 
+Shared Memory
+------------------------------------------------------------
 
+.. image:: ../figs/shmem_arch.drawio.png
+   :alt: Shared memory architecture
+   :align: center
 
-Heading level 3 (Subsection)
-----------------------------
+In a shared memory system, multiple CPUs are organized into distinct regions known as NUMA regions. Each of these regions exhibits varying affinities towards specific portions of memory, and multiple CPUs can be present within each NUMA region. The provided diagram illustrates two NUMA regions, each with a single CPU. These CPUs possess multiple cores, each capable of independently executing arithmetic and logic operations. Furthermore, each core maintains its own L1 cache, and depending on the system's architecture, all cores in a NUMA region may share an L2 cache, while NUMA regions may share an L3 cache. The diagram in question depicts only L1 and L2 caches.
 
-Heading level 4 (Sub-subsection)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+When running a sequential program, we utilize just one core from one of the NUMA regions. However, the program's performance can be significantly enhanced if it can distribute concurrent tasks to different cores.
 
-Heading level 5 (Paragraph)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You can use the command ``lstopo`` to find the architecture of your machine. ``lstopo`` on Gadi login nodes will give you the following:
 
-Heading level 6 (Subparagraph)
-+++++++++++++++++++++++++++++++
+.. image:: ../figs/cpu.png
+   :alt: lstopo output on a Gadi login node
+   :align: center
 
-Heading level 7 (Lowest level)
+Threads
+------------------------------------------------------------
 
+.. image:: ../figs/threads.png
+   :alt: Threads within a process
+   :align: center
 
-Add Imgaes
------------------
+A thread is a sequential independent execution stream that executes different tasks in order. Typically, a thread is a constituent component of a process, and a single process can have multiple threads. Each thread maintains its own program counter, stack memory, and registers. Nevertheless, threads within the same process share the heap memory and it can potentially share the same code and data.
 
-.. image:: ../figs/performance.png
+Each process has an upper bound on the number of threads it can handle. This number can be found using the command:
 
+::
 
-Bullets
----------------------------
+   cat /proc/sys/kernel/threads-max
 
- 
-1. **Annotation and Compilation**: When you use Numba's `@jit` decorator on a Python function, Numba 
-first analyzes the function's code. This analysis determines how to compile the function to improve performance. 
-You can also provide type hints to help Numba generate more efficient machine code.
+The operating system assigns a thread to a core, allowing the thread to utilize the core's ALU for instruction execution. At any moment, only one thread can access a particular ALU within a core. Consequently, when the number of threads assigned to a core exceeds the core's available ALUs, the OS performs ``context switching``, cycling between the various threads allocated to that core. Typically, in high-performance computing (HPC), it is customary to launch a number of threads equal to the number of available cores, thereby ensuring minimal context switching.
 
-2. **Type Inference**: Numba performs type inference on the function’s inputs and outputs. It determines the 
-types of variables and ensures that operations are optimized for those types. For example, it might optimize
-arithmetic operations for specific numerical types.
+Fork-Join Parallelism
+------------------------------------------------------------
 
-3. **Machine Code Generation**: Based on the type information and analysis, Numba generates machine code 
-tailored to the function. This code is designed to run directly on the hardware, bypassing the overhead of the 
-Python interpreter.
+.. image:: ../figs/fork-join.png
+   :alt: Fork-join parallelism
+   :align: center
 
-Code Blocks
---------------
+The fork-join method is a parallel computing technique in which the program's execution branches or ``forks`` at specific points and later converges or ``joins`` at subsequent points. In the fork phase, individual threads execute parallel segments of the program that can be processed simultaneously. In the join phase, the program resumes its execution in a sequential manner, much like a traditional sequential program. OpenMP follows the fork-join model of paralleism.
 
-..  code-block:: python
-    :linenos:
+Sample Application
+------------------------------------------------------------
 
-    import numba
-    from numba import jit, int32, prange, vectorize, float64, cuda
+In this tutorial we will be mainly using 3 applications to demonstrate the different aspcts of OpenMP:
 
+* Calculating the :doc:`value of π <applications/pi>` using monte carlo method.
+* Finding :doc:`Mandelbrot <applications/mandelbrot>` fractal by Monte Carlo sampling.
+* Tiled :doc:`Cholesky Factorization <applications/cholesky>`.
 
-Notes
---------------
+The Performance Application Programming Interface (PAPI)
+------------------------------------------------------------
 
-.. note::
- 1.  python3/3.11.0
- 2.  papi/7.0.1
- 3.  openmpi/4.0.1
- 4.  cuda/12.3.2
- 5.  gcc/14.2.0
+The Performance Application Programming Interface (PAPI) provides an interface and methodology for collecting performance counter information from various hardware and software components. In this tutorial, we will be using PAPI in some of the programs.
 
-Explanations
----------------
+In this tutorial, we will be using PAPI v5.7.0 in some of our programs and the program ``papi.c`` (in the ``src/`` directory) demonstrates how we can use the PAPI API.
 
-.. admonition:: Explanation
-   :class: attention
-   
-    #. Numba is a JIT compiler that optimizes Python code for performance.
-    #. It compiles functions at runtime, allowing for efficient execution of numerical computations.
-    #. The `@jit` decorator is used to mark functions for optimization.
-    #. Numba can handle different input types and adapt its compilation accordingly.
+OpenMP API
+------------------------------------------------------------
 
+The OpenMP Application Program Interface (API) is a portable, scalable model that gives shared-memory parallel programmers a simple and flexible interface for developing parallel applications. The OpenMP standard supports multi-platform shared-memory parallel programming in C/C++ and Fortran. It is jointly defined by a group of major computer hardware and software vendors and major parallel computing user facilities. For more information, see the `OpenMP website <http://www.openmp.org>`_.
 
-Importance
----------------
+OpenMP consists of a set of program directives and a small number of function/subroutine calls. The function/subroutine calls are associated with the execution runtime environment, memory locking, and timing. The directives are primarily responsible for the parallelization of the code. For C/C++ code, the directives take the form of *pragmas*:
 
-.. important::
-   In practice weight updates do not happen after  every individual sample; instead, they occur after each batch of data, depending on the **batch size** used. 
+``#pragma omp``
 
-Exercise
----------------
+A program written using OpenMP directives begins execution as a single process, or "master thread". A single thread executes sequentially until it encounters the first parallel construct. When this happens, a team of threads is created, and the original thread assumes the role of master. Upon completion of the parallel construct, the threads synchronize (unless specified otherwise), and only the master continues execution. Any number of parallel constructs may be specified in the program, and as a result, the program may "fork" and "join" many times.
 
-.. admonition:: Exercise
-   :class: todo
+The number of threads that are spawned may be:
 
-    1. Examine the program *src/distributed_data_parallel.py*. What the changes from data_parallel.ipynb?
-    2. Examine the job script *job_scripts/distributed_data_parallel.pbs*.
-    3. Run the program using the job script *job_scripts/distributed_data_parallel.pbs*.
+* explicitly given as part of the pragma;
+* set using one of the OpenMP function calls; or
+* predefined by an environment variable or a system setup default.
 
-
-
-.. admonition:: Key Points
-   :class: hint
-
-    #. Numba uses simple annonations to parallelise code.
+We note that the number of threads may exceed the number of physical cores (CPUs) on the machine; this is known as *over-subscription*. When over-subscription occurs, it is up to the operating system to schedule the threads as best it can among available cores. Even if the user requests a high thread count, the OpenMP runtime will generally avoid over-subscription, as it can reduce performance. This behaviour is controlled by the ``OMP_DYNAMIC`` environment variable (default ``true``), allowing the runtime to "adjust the number of threads to use for executing parallel regions to optimize the use of system resources". Setting ``OMP_DYNAMIC=false`` disables this behaviour, requiring OpenMP to spawn the requested number of threads.
