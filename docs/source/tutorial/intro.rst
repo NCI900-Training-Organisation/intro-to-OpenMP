@@ -89,3 +89,12 @@ The number of threads that are spawned may be:
 * predefined by an environment variable or a system setup default.
 
 We note that the number of threads may exceed the number of physical cores (CPUs) on the machine; this is known as *over-subscription*. When over-subscription occurs, it is up to the operating system to schedule the threads as best it can among available cores. Even if the user requests a high thread count, the OpenMP runtime will generally avoid over-subscription, as it can reduce performance. This behaviour is controlled by the ``OMP_DYNAMIC`` environment variable, allowing the runtime to "adjust the number of threads to use for executing parallel regions to optimize the use of system resources". Its initial value is implementation defined; common implementations (such as GCC's libgomp) default it to ``false``. Setting ``OMP_DYNAMIC=true`` enables this dynamic adjustment, while ``OMP_DYNAMIC=false`` requires OpenMP to attempt to spawn the requested number of threads.
+
+In practice, the most common way to choose the team size is the ``OMP_NUM_THREADS`` environment variable, which sets the number of threads used for parallel regions without recompiling the program::
+
+   OMP_NUM_THREADS=4 ./openmp_parallel_region
+
+This is usually the preferred approach for reproducible runs: it is explicit, requires no code changes, and — combined with ``OMP_DYNAMIC=false`` — requests a fixed, predictable number of threads. When several mechanisms are combined, the more specific one wins: a ``num_threads`` clause on a ``parallel`` directive takes highest priority, followed by a call to ``omp_set_num_threads()``, then the ``OMP_NUM_THREADS`` environment variable, and finally the implementation default.
+
+.. note::
+   Although these mechanisms allow the thread count to change between regions, it is generally **not recommended to vary the number of threads during a run**. A single, fixed team size — typically chosen once via ``OMP_NUM_THREADS`` with ``OMP_DYNAMIC=false`` — gives more predictable and reproducible performance: it keeps thread reuse and affinity (NUMA / first-touch data placement) stable and avoids the overhead of repeatedly building teams of different sizes. Reserve a per-region ``num_threads`` clause or ``omp_set_num_threads()`` for the uncommon cases where a particular region genuinely benefits from a different count.
