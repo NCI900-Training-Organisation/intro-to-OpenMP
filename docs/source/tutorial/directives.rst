@@ -339,6 +339,8 @@ A program can be divided into different sections. Each of these section can be c
 
 17. ``openmp_sections.c`` demonstrates how the ``sections`` construct works.
 
+Note, however, that ``sections`` does not scale. The number of sections is fixed in the source code, so only that many threads can ever be kept busy (any extra threads simply wait at the implicit barrier), and sections with unequal runtimes lead to load imbalance. It is therefore best suited to a small, fixed set of independent, coarse-grained blocks. For a variable number of work units, recursion, or work that should be load-balanced across the team, the :doc:`task construct <tasks>` is the more general and usually preferred tool — think of ``sections`` as a static special case of tasks.
+
 The ``if`` Clause
 ------------------------------------------------------------
 
