@@ -67,17 +67,52 @@ In this tutorial we will be mainly using 3 applications to demonstrate the diffe
 The Performance Application Programming Interface (PAPI)
 ------------------------------------------------------------
 
-The Performance Application Programming Interface (PAPI) provides an interface and methodology for collecting performance counter information from various hardware and software components. In this tutorial, we will be using PAPI in some of the programs.
+The Performance Application Programming Interface (PAPI) provides an interface and methodology for collecting performance counter information from various hardware and software components. Modern CPUs maintain a set of *hardware performance counters* that tally low-level events as a program runs — clock cycles, cache misses, instructions executed, cache-coherence traffic, and so on. Reading these counters lets us look past wall-clock time and understand *why* a program performs the way it does; in this tutorial, for example, we use them to measure the extra cache-line traffic caused by false sharing.
 
-In this tutorial, we will be using PAPI 7.0.1 in some of our programs and the program ``papi.c`` (in the ``src/`` directory) demonstrates how we can use the PAPI API.
+In this tutorial we use PAPI 7.0.1, and the program ``papi.c`` (in the ``src/`` directory) demonstrates the API. The programs use the PAPI *high-level* API: the region of code to be measured is wrapped between ``PAPI_hl_region_begin`` and ``PAPI_hl_region_end`` (the string is just a label for the region in the report):
 
-These programs use the PAPI *high-level* API (``PAPI_hl_region_begin`` / ``PAPI_hl_region_end``). With this interface the counters to record are chosen at run time through the ``PAPI_EVENTS`` environment variable, and a report is printed to the screen when ``PAPI_REPORT=1`` is set. For example::
+.. code-block:: c
+
+   PAPI_hl_region_begin("computation");
+   /* ... code to measure ... */
+   PAPI_hl_region_end("computation");
+
+With this interface the counters to record are chosen at run time through the ``PAPI_EVENTS`` environment variable, and a report is printed to the screen when ``PAPI_REPORT=1`` is set::
 
    export PAPI_EVENTS="PAPI_TOT_CYC,PAPI_L1_TCM,PAPI_LD_INS,PAPI_SR_INS"
    export PAPI_REPORT=1
    ./papi
 
-You can list the counters available on the machine with ``papi_avail`` (preset events) and ``papi_native_avail`` (native events).
+This produces a per-region, per-thread report. The exact layout depends on the PAPI version, but it looks something like::
+
+   PAPI-HL Output:
+   Region "computation" (thread 0)
+       PAPI_TOT_CYC : 1234567
+       PAPI_L1_TCM  : 8910
+       PAPI_LD_INS  : 100000
+       PAPI_SR_INS  : 50000
+
+The events requested across the tutorial programs are PAPI *preset* events:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Event
+     - Meaning
+   * - ``PAPI_TOT_CYC``
+     - Total clock cycles elapsed
+   * - ``PAPI_L1_TCM``
+     - Level-1 cache misses (total)
+   * - ``PAPI_LD_INS``
+     - Load (memory read) instructions
+   * - ``PAPI_SR_INS``
+     - Store (memory write) instructions
+   * - ``PAPI_CA_ITV``
+     - Requests for cache-line intervention — coherence traffic, the signal of false sharing
+   * - ``PAPI_DP_OPS``
+     - Double-precision floating-point operations
+
+You can list every counter available on the machine with ``papi_avail`` (preset events) and ``papi_native_avail`` (native events). Not all presets exist on every CPU, and some cannot be measured simultaneously; if a run reports an error, request fewer or different events.
 
 OpenMP API
 ------------------------------------------------------------

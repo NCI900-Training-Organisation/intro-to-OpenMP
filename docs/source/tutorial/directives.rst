@@ -221,9 +221,16 @@ Some methods to avoid false sharing are:
 
 9. The programs ``openmp_false_sharing.c`` and ``openmp_false_sharing_avoid.c`` demonstrates false sharing and a method to avoid it. Both programs use the PAPI high-level API, so set the events and enable the report before running to observe the difference in cache-line intervention counts::
 
+      # choose the counters to record (env vars persist for the shell session)
       export PAPI_EVENTS="PAPI_CA_ITV,PAPI_TOT_CYC"
+
+      # print the PAPI report to the screen
       export PAPI_REPORT=1
+
+      # run the first program, then note its PAPI_CA_ITV count
       ./openmp_false_sharing
+
+      # run the second separately and compare the PAPI_CA_ITV count
       ./openmp_false_sharing_avoid
 
 The Worksharing-Loop Construct (``for``)
