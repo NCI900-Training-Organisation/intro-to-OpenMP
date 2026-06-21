@@ -346,6 +346,19 @@ export PAPI_REPORT=1
 ./openmp_false_sharing_avoid
 ```
 
+> **_NOTE:_** The [`reduction` clause](#the-reduction-clause) is often the cleanest way to avoid false sharing for an accumulation. Rather than giving each thread a slot in a shared array (`sum_local[iam]`) and combining the slots afterwards, `reduction` gives every thread a _private_ partial result — kept in thread-local storage instead of a shared cache line — and combines them only at the end. This is why the summation exercises (Exercise 1 and the π exercise) never suffer from false sharing.
+>
+> In fact `openmp_false_sharing.c` could be rewritten the same way:
+>
+> ```c
+> double sum = 0.0;
+> #pragma omp parallel for reduction(+:sum)
+> for (i = 0; i < N; i++)
+>     sum += x[i] * y[i];
+> ```
+>
+> which removes the `sum_local` array — and the false sharing — entirely. Padding the array onto separate cache lines (as in `openmp_false_sharing_avoid.c`) is the more general fix, for when you must keep separate per-thread results that genuinely cannot be expressed as a reduction.
+
 ### The Worksharing-Loop Construct (`for`)
 
 In the program [`exercise2_solution.c`](./src/exercise2_solution.c), we parallelized a loop by manually assigning different loop indices to different threads. With `for` loops, OpenMP provides the [worksharing-loop construct](https://www.openmp.org/spec-html/5.1/openmpsu48.html#x73-730002.11.4) to do this for you. This directive is placed immediately before a for loop and automatically partitions the loop iterations across the available threads.

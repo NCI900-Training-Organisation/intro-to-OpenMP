@@ -69,6 +69,8 @@ The above three functions are used in the program ``openmp_max_threads.c``.
 
 How many threads are created? What is the maximum threads allowed?
 
+.. _reduction-clause:
+
 The ``reduction`` Clause
 ------------------------------------------------------------
 
@@ -232,6 +234,18 @@ Some methods to avoid false sharing are:
 
       # run the second separately and compare the PAPI_CA_ITV count
       ./openmp_false_sharing_avoid
+
+.. note::
+   The :ref:`reduction clause <reduction-clause>` is often the cleanest way to avoid false sharing for an accumulation. Rather than giving each thread a slot in a shared array (``sum_local[iam]``) and combining the slots afterwards, ``reduction`` gives every thread a *private* partial result — kept in thread-local storage instead of a shared cache line — and combines them only at the end. This is why the summation exercises (Exercise 1 and the π exercise) never suffer from false sharing.
+
+   In fact ``openmp_false_sharing.c`` could be rewritten the same way::
+
+      double sum = 0.0;
+      #pragma omp parallel for reduction(+:sum)
+      for (i = 0; i < N; i++)
+          sum += x[i] * y[i];
+
+   which removes the ``sum_local`` array — and the false sharing — entirely. Padding the array onto separate cache lines (as in ``openmp_false_sharing_avoid.c``) is the more general fix, for when you must keep separate per-thread results that genuinely cannot be expressed as a reduction.
 
 The Worksharing-Loop Construct (``for``)
 ------------------------------------------------------------
