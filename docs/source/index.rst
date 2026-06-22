@@ -21,9 +21,13 @@ Contents
     tutorial/intro.rst
     tutorial/directives.rst
     tutorial/tasks.rst
+    tutorial/further-examples.rst
     tutorial/applications/pi.rst
     tutorial/applications/mandelbrot.rst
     tutorial/applications/cholesky.rst
+    tutorial/applications/laplace.rst
+    tutorial/applications/conjugate-gradient.rst
+    tutorial/OpenMP-C.ipynb
     references
 
    

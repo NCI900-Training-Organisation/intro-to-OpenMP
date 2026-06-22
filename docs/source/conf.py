@@ -28,6 +28,16 @@ extensions = [
 ]
 nb_execution_mode = "off"
 
+# The imported OpenMP-C.ipynb is third-party content: it links to sibling
+# source files, starts its headings below H1, and uses IPython magics
+# (%%time, !cmd) that the C/ipython lexers cannot highlight. Suppress those
+# (non-actionable) warning categories so they do not fail a strict build.
+suppress_warnings = [
+    "myst.xref_missing",
+    "myst.header",
+    "misc.highlighting_failure",
+]
+
 # UPDATE THIS IF YOU NEED TO RENDER MARKDOWN FILE TO DIFFERENT FLAVOR.
 # render markdown format as ['commonmark', 'gfm', 'myst']
 nb_render_markdown_format="myst"

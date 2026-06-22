@@ -9,7 +9,8 @@ all:	openmp_parallel_region openmp_reduction openmp_max_threads papi\
 	openmp_schedule openmp_master openmp_single openmp_taskloop openmp_tied openmp_sections openmp_nowait \
 	openmp_parallel_for openmp_false_sharing openmp_false_sharing_avoid\
 	exercise1 exercise1_solution exercise2 exercise2_solution exercise3 exercise3_solution \
-	exercise4 exercise4_solution exercise5 exercise5_solution
+	exercise4 exercise4_solution exercise5 exercise5_solution \
+	exercise6 exercise6_solution exercise7 exercise7_solution
 
 papi:	papi.c
 	$(CC) $(CFLAGS) -o $@ $? -lpapi
@@ -101,7 +102,20 @@ exercise5:	exercise5.c
 	$(CC) $(CFLAGS) -o $@ $? $(LDFLAGS)
 
 exercise5_solution:	exercise5_solution.c
-	$(CC) $(CFLAGS) -o $@ $? $(LDFLAGS) 
+	$(CC) $(CFLAGS) -o $@ $? $(LDFLAGS)
+
+# Conjugate Gradient and Laplace do not use PAPI; build them with -O3 -lm.
+exercise6:	exercise6.c
+	$(CC) -O3 -fopenmp -o $@ $? -lm
+
+exercise6_solution:	exercise6_solution.c
+	$(CC) -O3 -fopenmp -o $@ $? -lm
+
+exercise7:	exercise7.c
+	$(CC) -O3 -fopenmp -o $@ $? -lm
+
+exercise7_solution:	exercise7_solution.c
+	$(CC) -O3 -fopenmp -o $@ $? -lm
 
 .SUFFIXES:	.o .c
 
@@ -115,6 +129,7 @@ clean:
 	/bin/rm -f openmp_simd openmp_parallel_section openmp_max_threads openmp_reduction openmp_master openmp_schedule openmp_single
 	/bin/rm -f openmp_taskloop openmp_tied openmp_sections openmp_nowait openmp_parallel_for openmp_barrier openmp_false_sharing openmp_false_sharing_avoid
 	/bin/rm -f exercise1 exercise1_solution exercise2 exercise2_solution exercise3 exercise3_solution 
-	/bin/rm -f exercise4 exercise4_solution exercise5 exercise5_solution 
-	/bin/rm -f *.csv
+	/bin/rm -f exercise4 exercise4_solution exercise5 exercise5_solution
+	/bin/rm -f exercise6 exercise6_solution exercise7 exercise7_solution
+	/bin/rm -f *.csv laplace-soln.dat
 
