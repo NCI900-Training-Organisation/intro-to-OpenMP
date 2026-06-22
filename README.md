@@ -51,10 +51,12 @@ The fork-join method is a parallel computing technique in which the program's ex
 
 ## Sample Application
 
-In this tutorial we will be mainly using 3 applications to demonstrate the different aspects of OpenMP:
+In this tutorial we will be mainly using the following applications to demonstrate the different aspects of OpenMP:
 * Calculating the [value of `π`](./docs/source/tutorial/applications/pi.rst) using monte carlo method.
 * Finding [Mandelbrot](./docs/source/tutorial/applications/mandelbrot.rst) fractal by Monte Carlo sampling.
 * Tiled [Cholesky Factorization](./docs/source/tutorial/applications/cholesky.rst).
+* Solving the [2D Poisson equation](./docs/source/tutorial/applications/laplace.rst) by finite differences (Jacobi / Gauss-Seidel).
+* Solving an SPD linear system with the [Conjugate Gradient method](./docs/source/tutorial/applications/conjugate-gradient.rst).
 
 ## The Performance Application Programming Interface (PAPI)
 
@@ -628,6 +630,50 @@ You can run the executable using
 
 where `N` is the Matrix dimension.
 
+
+## Further Worked Examples
+
+These two examples apply the worksharing-loop techniques to complete numerical applications, and introduce one more loop clause, `collapse`.
+
+### The `collapse` Clause
+
+By default `#pragma omp for` only distributes the *outermost* loop across threads. The [collapse clause](https://www.openmp.org/spec-html/5.1/openmpsu48.html#x73-730002.11.4) merges a number of perfectly nested loops into a single, larger iteration space and distributes that:
+
+```c
+#pragma omp parallel for collapse(2)
+for (int i = 0; i < N; i++)
+    for (int j = 0; j < M; j++)
+        /* ... */
+```
+
+This helps when the outer loop alone has too few iterations to keep all threads busy, or to expose more parallelism and improve load balance. The collapsed loops must be perfectly nested (no code between them) with independent bounds.
+
+### Exercise 6
+
+29. The program [exercise6.c](./src/exercise6.c) solves the [2D Poisson equation](./docs/source/tutorial/applications/laplace.rst) by finite differences, using either Jacobi or red-black Gauss-Seidel iteration. Each solver sweeps over a 2D `(i,j)` mesh, a natural candidate for `collapse(2)`. Parallelize the residual and the solver sweeps. The solution is in [exercise6_solution.c](./src/exercise6_solution.c).
+
+```
+make exercise6_solution
+
+# arguments: grid size, tolerance, method ("Jacobi" or "Gauss-Seidel")
+OMP_NUM_THREADS=4 ./exercise6_solution 512 1e-5 Jacobi
+OMP_NUM_THREADS=4 ./exercise6_solution 512 1e-5 Gauss-Seidel
+```
+
+The solution is written to `laplace-soln.dat` and can be visualised with `Laplace-plot.py`. Try different thread counts and compare the two methods.
+
+### Exercise 7
+
+30. The program [exercise7.c](./src/exercise7.c) solves a symmetric positive-definite system with the [Conjugate Gradient method](./docs/source/tutorial/applications/conjugate-gradient.rst). Almost all of the run time is spent in a few vector kernels — a matrix-vector product, two dot products, and some AXPY/scale updates. Parallelize each kernel with a worksharing loop, using `reduction(+:...)` for the dot products. The CG iteration itself stays sequential. The solution is in [exercise7_solution.c](./src/exercise7_solution.c).
+
+```
+make exercise7_solution
+
+# argument: tolerance; the matrix is read from stdin (MatrixMarket)
+OMP_NUM_THREADS=4 ./exercise7_solution 1e-5 < msc04515.dat
+```
+
+A small system (`Trefethen_20.dat`) is also provided for a quick check. Vary `OMP_NUM_THREADS` and observe how the solve time changes.
 
 ## Contributers
 This course is based on material developed by current and former ANU staff, including [Peter Strazdins](https://cecc.anu.edu.au/people/peter-strazdins), [Alistair Rendell](https://www.flinders.edu.au/people/alistair.rendell), [Josh Milthorpe](http://www.milthorpe.org), [Joseph John](http://josephjohn.org) and [Fred Fung](https://nci.org.au/research/people/fred-fung).
