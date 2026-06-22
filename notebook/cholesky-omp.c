@@ -1,0 +1,345 @@
+/* =================================================================
+cholesky-omp.c
+
+Tiled (blocked) right-looking Cholesky factorisation A = L L^T of a
+symmetric positive-definite matrix.
+
+EXERCISE: parallelise cholesky() with OpenMP tasks (see the FIXME markers).
+The complete serial reference is cholesky-serial.c.
+
+The work is expressed as four tile kernels (mirroring BLAS/LAPACK):
+  block_cholesky               - factor diagonal tile        (POTRF)
+  block_triangular_solve       - off-diagonal panel solve    (TRSM)
+  block_symmetric_rank_k_update- diagonal trailing update     (SYRK)
+  block_sub_matrix_mul         - off-diagonal trailing update (GEMM)
+
+Compile: gcc -fopenmp -g -Wall -O3 -lm -o cholesky-omp cholesky-omp.c
+
+Usage:   ./cholesky-omp Matrix_Dimension
+
+Produced for NCI Training.
+
+Joseph John
+====================================================================*/
+#include <math.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
+#include <time.h>
+#include <unistd.h>
+#include <omp.h>
+
+#define DEBUG 0
+
+#define BLOCK_SIZE 16
+
+#define MATRIX_BLOCK(nsize, mat, i, j) \
+  (&mat[BLOCK_SIZE * i * nsize + j * BLOCK_SIZE])
+
+void print_matrix(const char label[], double *matrix, size_t ncol, size_t nrow);
+void elp_time(int *isec, int *iusec);
+
+void cholesky(const size_t nsize, double *l);
+void block_cholesky(const size_t n, double *a, const size_t lda);
+void block_triangular_solve(const size_t m, const size_t n, const double *a,
+                            const size_t lda, double *b, const size_t ldb);
+void block_symmetric_rank_k_update(const size_t n, const size_t k,
+                                   const double *a, const size_t lda, double *c,
+                                   const size_t ldc);
+void block_sub_matrix_mul(const size_t m, const size_t n, const size_t k,
+                          const double *a, const size_t lda, const double *b,
+                          const size_t ldb, double *c, const size_t ldc);
+double check_factorization(const size_t n, const double *a, const double *l);
+
+int main(int argc, char *argv[]) {
+  size_t nsize;
+  char name[21];
+
+  if (argc != 2) {
+    printf(" %s Matrix_Dimension \n", argv[0]);
+    return -1;
+  } else {
+    nsize = atoi(argv[1]);
+  }
+
+  double *a = (double *)malloc(nsize * nsize * sizeof(double));
+  double *l = (double *)malloc(nsize * nsize * sizeof(double));
+
+  if (!(a && l)) {
+    printf(" Failed to allocate matrix and vectors of size n %zu \n", nsize);
+    exit(-1);
+  }
+  gethostname(name, 20);
+  printf("--------------------------------------------\n");
+  printf("Cholesky Factorization Benchmark\n");
+  printf("Running on    :  %20s\n", name);
+  printf("Size of system:  %20zu\n", nsize);
+  printf("--------------------------------------------\n");
+
+  srand(time(NULL));
+
+  // initialize arrays - make symmetric
+  for (size_t i = 0; i < nsize; i++) {
+    for (size_t j = 0; j <= i; j++) {
+      a[i * nsize + j] = 1.0 - (double)rand() / RAND_MAX;
+      a[j * nsize + i] = a[i * nsize + j];
+    }
+    a[i * nsize + i] += nsize;
+  }
+
+  if (DEBUG) {
+    print_matrix("A", a, nsize, nsize);
+  }
+
+  // L = A
+  for (size_t i = 0; i < nsize; i++) {
+    for (size_t j = 0; j < nsize; j++) {
+      l[i * nsize + j] = a[i * nsize + j];
+    }
+  }
+
+  int isec0, iusec0, isec1, iusec1;
+  int delta;
+  double time, err = 0;
+  float mflops;
+
+  elp_time(&isec0, &iusec0);
+
+  cholesky(nsize, l);
+
+  elp_time(&isec1, &iusec1);
+
+  delta = (isec1 - isec0) * 1000000 + iusec1 - iusec0;
+  time = 1.0e-6 * (double)delta;
+  mflops = 1.0 / 3.0 * nsize * nsize * nsize / delta;
+  err = check_factorization(nsize, a, l);
+
+  printf("\n\n");
+  printf("      size       time(s)     MFLOP/s       Error\n");
+  printf(
+      "-----------------------------------------------------------------------"
+      "\n");
+  printf("%10zu %12.6f %12.2e %11.3e\n", nsize, time, mflops, err);
+
+  if (DEBUG) {
+    print_matrix("L", l, nsize, nsize);
+  }
+
+  printf(
+      "-----------------------------------------------------------------------"
+      "\n");
+
+  free(l);
+  free(a);
+  return 0;
+}  // main()
+
+/*
+ * Compute the Cholesky factorization of matrix L, overwriting the original
+ * matrix. The factorization is computed using a right-looking blocked
+ * Cholesky decomposition.
+ */
+void cholesky(const size_t nsize, double *l) {
+  // set upper triangle to zero
+  for (size_t i = 0; i < nsize; i++) {
+    for (size_t j = i + 1; j < nsize; j++) {
+      l[i * nsize + j] = 0.0;
+    }
+  }
+
+  int num_blocks = (nsize + BLOCK_SIZE - 1) / BLOCK_SIZE;
+
+  /* EXERCISE: parallelise the blocked factorisation with OpenMP tasks.
+   *
+   * Enclose the loop nest below in a parallel region executed by ONE thread
+   * (a #pragma omp parallel followed by #pragma omp single), so a single
+   * producer generates tasks while the whole team executes them. Then turn
+   * each tile operation into a task and declare its tile data dependencies
+   * with the depend clause, e.g.
+   *     #pragma omp task depend(inout: tile)                 // POTRF
+   *     #pragma omp task depend(in: diag) depend(inout: tile) // TRSM
+   * so independent tiles run concurrently while the dependency graph is
+   * respected. Use the tile base pointer MATRIX_BLOCK(...) as the dependence
+   * object (e.g. depend(inout: l[...]) ).
+   */
+  for (int k = 0; k < num_blocks; k++) {
+    size_t k_height = k < num_blocks - 1
+                          ? BLOCK_SIZE
+                          : nsize - (BLOCK_SIZE * (num_blocks - 1));
+    /* FIXME: task -- factor the diagonal tile A[k][k]  (POTRF) */
+    block_cholesky(k_height, MATRIX_BLOCK(nsize, l, k, k),
+                   nsize);  // A[k][k] = sqrt(A[k][k])
+
+    for (int m = k + 1; m < num_blocks; m++) {
+      size_t m_width = m < num_blocks - 1
+                           ? BLOCK_SIZE
+                           : nsize - (BLOCK_SIZE * (num_blocks - 1));
+      /* FIXME: task -- triangular solve for tile A[m][k]  (TRSM) */
+      block_triangular_solve(m_width, k_height, MATRIX_BLOCK(nsize, l, k, k),
+                             nsize, MATRIX_BLOCK(nsize, l, m, k),
+                             nsize);  // A[m][k] = A[m,k] A[k][k]^-1
+    }
+
+    for (int m = k + 1; m < num_blocks; m++) {
+      size_t m_width = m < num_blocks - 1
+                           ? BLOCK_SIZE
+                           : nsize - (BLOCK_SIZE * (num_blocks - 1));
+      /* FIXME: task -- symmetric rank-k update of tile A[m][m]  (SYRK) */
+      block_symmetric_rank_k_update(
+          m_width, k_height, MATRIX_BLOCK(nsize, l, m, k), nsize,
+          MATRIX_BLOCK(nsize, l, m, m), nsize);  // A[m][m] -= A[m][k] A[m][k]^T
+
+      for (int n = k + 1; n < m; n++) {
+        size_t n_width = n < num_blocks - 1
+                             ? BLOCK_SIZE
+                             : nsize - (BLOCK_SIZE * (num_blocks - 1));
+        /* FIXME: task -- update off-diagonal tile A[m][n]  (GEMM) */
+        block_sub_matrix_mul(
+            m_width, n_width, k_height, MATRIX_BLOCK(nsize, l, m, k), nsize,
+            MATRIX_BLOCK(nsize, l, n, k), nsize, MATRIX_BLOCK(nsize, l, m, n),
+            nsize);  // A[m][n] -= A[m][k] A[n,k]^T
+      }
+    }
+  }
+}  // cholesky ()
+
+/*
+ * Update A = cholesky factorization of A where A is an n by n matrix
+ * @see BLAS dpotrf
+ */
+void block_cholesky(const size_t n, double *a, const size_t lda) {
+  for (size_t i = 0; i < n; i++) {
+    a[i * lda + i] = sqrt(a[i * lda + i]);
+    double invd = 1.0 / a[i * lda + i];
+    for (size_t j = i + 1; j < n; j++) {
+      a[j * lda + i] = a[j * lda + i] * invd;
+    }
+    for (size_t j = i + 1; j < n; j++) {
+      for (size_t k = i + 1; k <= j; k++) {
+        a[j * lda + k] -= a[j * lda + i] * a[k * lda + i];
+      }
+    }
+  }
+}
+
+/*
+ * Solves X A^T = B where X and B are m by n matrices, overwriting B with X.
+ * @see BLAS dtrsm
+ */
+void block_triangular_solve(const size_t m, const size_t n, const double *a,
+                            const size_t lda, double *b, const size_t ldb) {
+  for (size_t k = 0; k < n; k++) {
+    double tmp = 1.0 / a[k * lda + k];
+    for (size_t i = 0; i < m; i++) {
+      b[i * ldb + k] = tmp * b[i * ldb + k];
+    }
+    for (size_t j = k + 1; j < n; j++) {
+      if (a[j * lda + k] != 0.0) {
+        double tmp2 = a[j * lda + k];
+        for (size_t i = 0; i < m; i++) {
+          b[i * ldb + j] = b[i * ldb + j] - tmp2 * b[i * ldb + k];
+        }
+      }
+    }
+  }
+}
+
+/*
+ * Symmetric rank-K update C -= A * A^T
+ * @see BLAS dsyrk
+ */
+void block_symmetric_rank_k_update(const size_t n, const size_t k,
+                                   const double *a, const size_t lda, double *c,
+                                   const size_t ldc) {
+  for (size_t j = 0; j < n; j++) {
+    for (size_t l = 0; l < k; l++) {
+      double tmp = a[j * lda + l];
+      for (size_t i = j; i < n; i++) {
+        c[i * ldc + j] -= tmp * a[i * lda + l];
+      }
+    }
+  }
+}
+
+/*
+ * Updates C -= A * B^T
+ * @see BLAS dgemm
+ */
+void block_sub_matrix_mul(const size_t m, const size_t n, const size_t k,
+                          const double *a, const size_t lda, const double *b,
+                          const size_t ldb, double *c, const size_t ldc) {
+  for (size_t i = 0; i < m; i++)
+    for (size_t j = 0; j < n; j++)
+      for (size_t l = 0; l < k; l++)
+        c[i * ldc + j] = c[i * ldc + j] - a[i * lda + l] * b[j * ldb + l];
+}
+
+/*
+ * Error of the factorization L of A via L L^T v - A v for a random v.
+ */
+double check_factorization(size_t n, const double *a, const double *l) {
+  double max_err = 0.0;
+  double *v = malloc(n * sizeof(double));
+  double *err = malloc(n * sizeof(double));
+  double *temp = malloc(n * sizeof(double));
+
+  for (size_t i = 0; i < n; i++) {
+    v[i] = (double)(rand()) / RAND_MAX * 2.0 - 1.0;
+  }
+
+  // temp = L^Tv
+  for (size_t i = 0; i < n; i++) {
+    temp[i] = 0.0;
+    for (size_t j = 0; j < n; j++) {
+      temp[i] += l[j * n + i] * v[j];
+    }
+    if (isnan(temp[i])) return INFINITY;
+  }
+  // err = LL^Tv
+  for (size_t i = 0; i < n; i++) {
+    err[i] = 0.0;
+    for (size_t j = 0; j < n; j++) {
+      err[i] += l[i * n + j] * temp[j];
+    }
+  }
+
+  // err -= Av
+  for (size_t i = 0; i < n; i++) {
+    for (size_t j = 0; j < n; j++) {
+      err[i] -= a[i * n + j] * v[j];
+    }
+    max_err = fmax(max_err, fabs(err[i]));
+  }
+
+  free(v);
+  free(err);
+  free(temp);
+  return max_err;
+}
+
+#define PRINT_COLS 5
+void print_matrix(const char label[], double *matrix, size_t ncol,
+                  size_t nrow) {
+  size_t icount, row, col;
+  printf("\n print_matrix : %-40s \n", label);
+  icount = 0;
+  for (row = 0; row < nrow; row++) {
+    printf("%2zu ", row);
+    for (col = 0; col < ncol; col++) {
+      printf("%11.3e", matrix[icount]);
+      icount++;
+      if (col % PRINT_COLS == (PRINT_COLS - 1) && col < (ncol - 1))
+        printf("\n   ");
+    }
+    printf("\n");
+  }
+}
+
+void elp_time(int *isec, int *iusec) {
+  struct timeval tp;
+  gettimeofday(&tp, NULL);
+  *isec = tp.tv_sec;
+  *iusec = tp.tv_usec;
+}
